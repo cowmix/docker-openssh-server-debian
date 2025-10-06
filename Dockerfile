@@ -34,8 +34,13 @@ RUN \
     $HOME/.cache
 
 RUN \
-  echo "**** install devops tools ****" && \
+  echo "**** configure locales ****" && \
   apt-get update && \
+  apt-get install -y --no-install-recommends \
+    locales && \
+  echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
+  locale-gen && \
+  echo "**** install devops tools ****" && \
   apt-get install -y --no-install-recommends \
     byobu \
     curl \
