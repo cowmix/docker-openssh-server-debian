@@ -2,6 +2,11 @@
 
 FROM ghcr.io/linuxserver/baseimage-debian:trixie
 
+# set locale environment variables
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
+
 # set version label
 ARG BUILD_DATE
 ARG VERSION
@@ -40,6 +45,7 @@ RUN \
     locales && \
   echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
   locale-gen && \
+  update-locale LANG=en_US.UTF-8 && \
   echo "**** install devops tools ****" && \
   apt-get install -y --no-install-recommends \
     byobu \
