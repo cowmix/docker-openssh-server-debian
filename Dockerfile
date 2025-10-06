@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM ghcr.io/linuxserver/baseimage-alpine:3.22
+FROM ghcr.io/linuxserver/baseimage-debian:trixie
 
 # set version label
 ARG BUILD_DATE
@@ -11,26 +11,26 @@ LABEL maintainer="aptalca"
 
 RUN \
   echo "**** install runtime packages ****" && \
-  apk add --no-cache --upgrade \
+  apt-get update && \
+  apt-get install -y --no-install-recommends \
     logrotate \
     nano \
     netcat-openbsd \
     sudo && \
   echo "**** install openssh-server ****" && \
-  if [ -z ${OPENSSH_RELEASE+x} ]; then \
-    OPENSSH_RELEASE=$(curl -sL "http://dl-cdn.alpinelinux.org/alpine/v3.22/main/x86_64/APKINDEX.tar.gz" | tar -xz -C /tmp && \
-    awk '/^P:openssh-server-pam$/,/V:/' /tmp/APKINDEX | sed -n 2p | sed 's/^V://'); \
-  fi && \
-  apk add --no-cache \
-    openssh-client==${OPENSSH_RELEASE} \
-    openssh-server-pam==${OPENSSH_RELEASE} \
-    openssh-sftp-server==${OPENSSH_RELEASE} && \
+  apt-get install -y --no-install-recommends \
+    openssh-client \
+    openssh-server \
+    openssh-sftp-server && \
   printf "Linuxserver.io version: ${VERSION}\nBuild-date: ${BUILD_DATE}" > /build_version && \
   echo "**** setup openssh environment ****" && \
   sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config && \
   usermod --shell /bin/bash abc && \
+  apt-get clean && \
   rm -rf \
     /tmp/* \
+    /var/lib/apt/lists/* \
+    /var/tmp/* \
     $HOME/.cache
 
 # add local files

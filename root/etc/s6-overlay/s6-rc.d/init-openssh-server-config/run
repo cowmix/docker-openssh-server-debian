@@ -88,7 +88,7 @@ fi
 
 # set umask for sftp
 UMASK=${UMASK:-022}
-sed -i "s|/usr/lib/ssh/sftp-server$|/usr/lib/ssh/sftp-server -u ${UMASK}|g" /config/sshd/sshd_config
+sed -i "s|/usr/lib/openssh/sftp-server$|/usr/lib/openssh/sftp-server -u ${UMASK}|g" /config/sshd/sshd_config
 
 # set key auth in file
 if [[ ! -f /config/.ssh/authorized_keys ]]; then

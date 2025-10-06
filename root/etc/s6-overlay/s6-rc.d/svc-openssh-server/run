@@ -9,4 +9,4 @@ done
 
 exec 2>&1 \
     s6-notifyoncheck -d -n 300 -w 1000 -c "nc -z localhost ${LISTEN_PORT:-2222}" \
-        s6-setuidgid "${USER_NAME}" /usr/sbin/sshd.pam -D -e -f /config/sshd/sshd_config ${SSH_HOST_KEYS}
+        s6-setuidgid "${USER_NAME}" /usr/sbin/sshd -D -e -f /config/sshd/sshd_config ${SSH_HOST_KEYS}
