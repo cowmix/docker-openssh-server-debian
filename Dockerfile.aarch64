@@ -33,6 +33,32 @@ RUN \
     /var/tmp/* \
     $HOME/.cache
 
+RUN \
+  echo "**** install devops tools ****" && \
+  apt-get update && \
+  apt-get install -y --no-install-recommends \
+    byobu \
+    curl \
+    git \
+    golang \
+    htop \
+    jq \
+    mc \
+    ncdu \
+    python3 \
+    python3-pip \
+    python3-venv \
+    telnet \
+    tmux \
+    vim \
+    wget \
+    zsh && \
+  apt-get clean && \
+  rm -rf \
+    /tmp/* \
+    /var/lib/apt/lists/* \
+    /var/tmp/*
+
 # add local files
 COPY /root /
 
