@@ -14,6 +14,7 @@ ARG OPENSSH_RELEASE
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="aptalca"
 
+# core: openssh + locales only — dev tools come from custom script
 RUN \
   echo "**** install runtime packages ****" && \
   apt-get update && \
@@ -46,7 +47,7 @@ RUN \
   echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
   locale-gen && \
   update-locale LANG=en_US.UTF-8 && \
-  echo "**** install devops tools ****" && \
+  echo "**** install base tools ****" && \
   apt-get install -y --no-install-recommends \
     byobu \
     curl \
@@ -54,24 +55,23 @@ RUN \
     golang \
     htop \
     jq \
+    less \
     mc \
     ncdu \
-    python3 \
-    python3-pip \
-    python3-venv \
-    telnet \
     tmux \
     vim \
     wget \
     zsh && \
   apt-get clean && \
-  rm -rf \
-    /tmp/* \
-    /var/lib/apt/lists/* \
-    /var/tmp/*
+  rm -rf /tmp/* /var/lib/apt/lists/* /var/tmp/*
+
+# run custom install script if provided
+ARG CUSTOM_SCRIPT="./custom-install-ssh.sh"
+COPY ${CUSTOM_SCRIPT} /opt/custom_install.sh
+RUN if [ -f "/opt/custom_install.sh" ]; then /bin/bash /opt/custom_install.sh; fi
 
 # add local files
-COPY /root /
+COPY docker-openssh-server-debian/root /
 
 EXPOSE 2222
 
