@@ -1,0 +1,4 @@
+# Override submodule's .dockerignore for compose builds
+# (BuildKit uses Dockerfile.dockerignore when present)
+.git
+.github
