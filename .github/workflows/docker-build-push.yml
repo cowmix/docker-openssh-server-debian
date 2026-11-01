@@ -65,5 +65,6 @@ jobs:
           build-args: |
             BUILD_DATE=${{ github.event.repository.updated_at }}
             VERSION=${{ steps.meta.outputs.version }}
+            ROOT_SRC=root
           cache-from: type=gha
           cache-to: type=gha,mode=max

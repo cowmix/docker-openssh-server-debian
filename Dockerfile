@@ -49,19 +49,37 @@ RUN \
   update-locale LANG=en_US.UTF-8 && \
   echo "**** install base tools ****" && \
   apt-get install -y --no-install-recommends \
+    bash-completion \
+    bind9-dnsutils \
     byobu \
+    ca-certificates \
     curl \
+    file \
     git \
     golang \
     htop \
+    iproute2 \
+    iputils-ping \
     jq \
     less \
+    lsof \
     mc \
+    mtr-tiny \
     ncdu \
+    procps \
+    pv \
+    ripgrep \
+    rsync \
     tmux \
+    tree \
+    unzip \
     vim \
     wget \
+    zip \
     zsh && \
+  echo "**** install restic (backup target tooling) ****" && \
+  apt-get install -y --no-install-recommends \
+    restic && \
   apt-get clean && \
   rm -rf /tmp/* /var/lib/apt/lists/* /var/tmp/*
 
@@ -71,7 +89,10 @@ COPY ${CUSTOM_SCRIPT} /opt/custom_install.sh
 RUN if [ -f "/opt/custom_install.sh" ]; then /bin/bash /opt/custom_install.sh; fi
 
 # add local files
-COPY docker-openssh-server-debian/root /
+# ROOT_SRC defaults to the parent-dir (compose/submodule) layout;
+# pass --build-arg ROOT_SRC=root when building with this repo as context.
+ARG ROOT_SRC="docker-openssh-server-debian/root"
+COPY ${ROOT_SRC} /
 
 EXPOSE 2222
 

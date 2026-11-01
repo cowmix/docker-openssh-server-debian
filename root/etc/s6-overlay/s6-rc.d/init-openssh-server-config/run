@@ -145,6 +145,22 @@ if [[ ! -f /config/logs/loginfo.txt ]]; then
     echo "The current log file is named \"current\". The rotated log files are gzipped, named with a TAI64N timestamp and a \".s\" extension" > /config/logs/loginfo.txt
 fi
 
+# restic / backup destination
+# Repos live under BACKUP_DIR (default /backups) and are reached over sftp, e.g.
+#   restic -r sftp://user@host:2222//backups/myrepo init
+BACKUP_DIR=${BACKUP_DIR:-/backups}
+mkdir -p "${BACKUP_DIR}"
+if ! mountpoint -q "${BACKUP_DIR}"; then
+    echo "**** WARNING: ${BACKUP_DIR} is not a mounted volume; backups stored there will be lost when the container is recreated ****"
+fi
+# only walk the tree when ownership is off (first run or PUID/PGID change) to keep startup fast on large repos
+if [[ "$(stat -c '%u:%g' "${BACKUP_DIR}")" != "$(id -u "${USER_NAME}"):$(id -g "${USER_NAME}")" ]]; then
+    echo "Fixing ownership of ${BACKUP_DIR}"
+    lsiown -R "${USER_NAME}":"${USER_NAME}" "${BACKUP_DIR}"
+fi
+chmod 700 "${BACKUP_DIR}"
+echo "Backup (restic) directory is ${BACKUP_DIR}"
+
 # permissions
 lsiown -R "${USER_NAME}":"${USER_NAME}" \
     /config
