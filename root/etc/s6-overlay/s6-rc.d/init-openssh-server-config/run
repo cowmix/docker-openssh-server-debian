@@ -45,6 +45,17 @@ if [[ ! -f /config/sshd/sshd_config ]]; then
     cp -a /etc/ssh/sshd_config /config/sshd/sshd_config
 fi
 
+# Older builds of this fork shipped host keys generated at image build time (Debian's
+# openssh-server postinst), so every container from the same image shared one private key.
+# Detect keys copied from such an image and replace them with fresh, per-container keys.
+if grep -qs '@buildkitsandbox$' /config/ssh_host_keys/ssh_host_*_key.pub; then
+    echo "**** WARNING: host keys in /config/ssh_host_keys were baked into the image and are not unique. ****"
+    echo "**** Regenerating them. Clients will see a 'host key changed' warning once; ****"
+    echo "**** remove the old entry with: ssh-keygen -R '[<host>]:2222' ****"
+    rm -rf /config/ssh_host_keys
+    rm -f /etc/ssh/ssh_host_*
+fi
+
 if [[ ! -d /config/ssh_host_keys ]]; then
     mkdir -p /config/ssh_host_keys
     ssh-keygen -A
