@@ -42,3 +42,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 .jenkins-external
+
+# local compose runtime data (host keys, logs, restic repos)
+/config/
+/backups/

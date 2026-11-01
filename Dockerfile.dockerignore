@@ -2,3 +2,7 @@
 # (BuildKit uses Dockerfile.dockerignore when present)
 .git
 .github
+
+# local compose runtime data
+config
+backups

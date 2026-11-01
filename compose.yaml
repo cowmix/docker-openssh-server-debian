@@ -1,0 +1,44 @@
+# Example: SSH box + restic backup target.
+#   set PUBLIC_KEY below, then: docker compose up -d
+#
+# Clients back up with:
+#   restic -r sftp://restic@<host>:2222//backups/<repo-name> init
+# See FORK.md for details.
+
+services:
+  openssh-server:
+    image: ghcr.io/cowmix/docker-openssh-server-debian:latest
+    # To build locally instead of pulling, comment out `image:` above and uncomment:
+    # build:
+    #   context: .
+    #   args:
+    #     ROOT_SRC: root
+    #     # CUSTOM_SCRIPT: ./custom-install-ssh.sh   # heavy dev tools (JDK, Node, podman...)
+    container_name: openssh-server
+    hostname: openssh-server
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      # Login name. Don't use names that already exist in Debian (backup, daemon, www-data, ...)
+      # or init will halt.
+      - USER_NAME=restic
+      # One or more public keys. Prefix a key with
+      #   restrict,command="/usr/lib/openssh/sftp-server"
+      # to limit it to sftp only (no shell), which is ideal for restic clients.
+      - PUBLIC_KEY=restrict,command="/usr/lib/openssh/sftp-server" ssh-ed25519 AAAA...replace-me... client@host
+      # Alternatively mount a file or a directory of keys:
+      # - PUBLIC_KEY_FILE=/run/keys/id.pub
+      # - PUBLIC_KEY_DIR=/run/keys
+      - PASSWORD_ACCESS=false
+      - SUDO_ACCESS=false
+      # - USER_PASSWORD=changeme       # needed for PASSWORD_ACCESS=true / sudo with password
+      # - BACKUP_DIR=/backups          # where restic repos live (default /backups)
+      # - LOG_STDOUT=true              # send sshd logs to `docker logs` instead of /config/logs
+    volumes:
+      - ./config:/config               # sshd config, host keys, authorized_keys, logs, user home
+      - ./backups:/backups             # restic repositories. On macOS use a named volume instead.
+      # - ./keys:/run/keys:ro
+    ports:
+      - "2222:2222"
+    restart: unless-stopped

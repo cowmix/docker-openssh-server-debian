@@ -30,23 +30,11 @@ docker build --build-arg ROOT_SRC=root -t openssh-server-debian .
 restic talks to this container over **sftp**. Repositories live under `BACKUP_DIR` (default `/backups`).
 Always mount a volume there; the container logs a warning if it isn't a mount.
 
-```yaml
-services:
-  restic-target:
-    image: ghcr.io/cowmix/docker-openssh-server-debian:latest
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - USER_NAME=restic          # NOT "backup" - that's an existing Debian system user and init will halt
-      - PUBLIC_KEY=restrict,command="/usr/lib/openssh/sftp-server" ssh-ed25519 AAAA... client@host
-      # - BACKUP_DIR=/backups      # optional override
-    volumes:
-      - ./config:/config
-      - /srv/restic:/backups
-    ports:
-      - 2222:2222
-    restart: unless-stopped
-```
+See [`compose.yaml`](compose.yaml) for a ready-to-edit example. The essentials:
+
+- `USER_NAME=restic`. Don't use `backup`: it's an existing Debian system user and init will halt.
+- `PUBLIC_KEY=restrict,command="/usr/lib/openssh/sftp-server" ssh-ed25519 AAAA...` for sftp-only client keys.
+- A volume mounted at `/backups` (or `BACKUP_DIR`).
 
 The `restrict,command="/usr/lib/openssh/sftp-server"` prefix locks that key to sftp only (no shell, no
 forwarding). Drop the prefix for a key that should also get a normal shell.

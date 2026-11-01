@@ -4,3 +4,7 @@
 .gitattributes
 READMETEMPLATE.md
 README.md
+
+# local compose runtime data
+config
+backups
