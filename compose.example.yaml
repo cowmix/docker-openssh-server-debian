@@ -1,9 +1,22 @@
-# Example: SSH box + restic backup target.
-#   cp compose.example.yaml compose.yaml   # compose.yaml is git-ignored
-#   edit PUBLIC_KEY etc., then: docker compose up -d
+# Example: SSH box + restic backup target, with two kinds of keys:
+#   - your personal key   -> full shell (ssh, scp, rsync, port forwarding)
+#   - restic client keys  -> sftp only (no shell), so a leaked backup key can't log in
 #
-# Clients back up with:
-#   restic -r sftp://restic@<host>:2222//backups/<repo-name> init
+# Setup:
+#   cp compose.example.yaml compose.yaml      # compose.yaml is git-ignored
+#   mkdir -p keys                             # keys/ is git-ignored
+#   cp ~/.ssh/id_ed25519.pub keys/me.pub      # shell access: plain public key line
+#   # restic client key: same format, with the sftp-only prefix in front:
+#   echo "restrict,command=\"/usr/lib/openssh/sftp-server\" $(cat restic_ed25519.pub)" > keys/restic-nas.pub
+#   docker compose up -d
+#
+# Every file in keys/ is read as one key line, so keep only key files in there.
+# Keys are only ever ADDED to config/.ssh/authorized_keys on startup. To change or revoke
+# a key, edit that file too, then restart the container.
+#
+# Use it:
+#   ssh -p 2222 restic@<host>                                          # shell (personal key)
+#   restic -r sftp://restic@<host>:2222//backups/<repo-name> init      # backups (either key)
 # See FORK.md for details.
 
 services:
@@ -21,25 +34,21 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Etc/UTC
-      # Login name. Don't use names that already exist in Debian (backup, daemon, www-data, ...)
-      # or init will halt.
+      # Login name shared by all keys. Don't use names that already exist in Debian
+      # (backup, daemon, www-data, ...) or init will halt.
       - USER_NAME=restic
-      # One or more public keys. Prefix a key with
-      #   restrict,command="/usr/lib/openssh/sftp-server"
-      # to limit it to sftp only (no shell), which is ideal for restic clients.
-      - PUBLIC_KEY=restrict,command="/usr/lib/openssh/sftp-server" ssh-ed25519 AAAA...replace-me... client@host
-      # Alternatively mount a file or a directory of keys:
-      # - PUBLIC_KEY_FILE=/run/keys/id.pub
-      # - PUBLIC_KEY_DIR=/run/keys
+      - PUBLIC_KEY_DIR=/run/keys
+      # A single key can also go inline instead (or as well):
+      # - PUBLIC_KEY=ssh-ed25519 AAAA... you@laptop
       - PASSWORD_ACCESS=false
-      - SUDO_ACCESS=false
+      - SUDO_ACCESS=false              # true = passwordless sudo for shell users (unless USER_PASSWORD set)
       # - USER_PASSWORD=changeme       # needed for PASSWORD_ACCESS=true / sudo with password
       # - BACKUP_DIR=/backups          # where restic repos live (default /backups)
       # - LOG_STDOUT=true              # send sshd logs to `docker logs` instead of /config/logs
     volumes:
       - ./config:/config               # sshd config, host keys, authorized_keys, logs, user home
+      - ./keys:/run/keys:ro            # one public key per file (see header)
       - ./backups:/backups             # restic repositories. On macOS use a named volume instead.
-      # - ./keys:/run/keys:ro
     ports:
       - "2222:2222"
     restart: unless-stopped

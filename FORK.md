@@ -33,11 +33,16 @@ Always mount a volume there; the container logs a warning if it isn't a mount.
 Copy [`compose.example.yaml`](compose.example.yaml) to `compose.yaml` (git-ignored) and edit it. The essentials:
 
 - `USER_NAME=restic`. Don't use `backup`: it's an existing Debian system user and init will halt.
-- `PUBLIC_KEY=restrict,command="/usr/lib/openssh/sftp-server" ssh-ed25519 AAAA...` for sftp-only client keys.
+- `PUBLIC_KEY_DIR=/run/keys` with `./keys` mounted there, holding one public key per file:
+  - `keys/me.pub` is a plain key line and gets a full shell (ssh, rsync, scp, forwarding).
+  - `keys/restic-nas.pub` is `restrict,command="/usr/lib/openssh/sftp-server" ssh-ed25519 AAAA...` and is limited to
+    sftp only. restic and scp work with it; a shell, rsync and forwarding are refused. A leaked backup key
+    therefore can't log in.
 - A volume mounted at `/backups` (or `BACKUP_DIR`).
 
-The `restrict,command="/usr/lib/openssh/sftp-server"` prefix locks that key to sftp only (no shell, no
-forwarding). Drop the prefix for a key that should also get a normal shell.
+All keys log in as the same `USER_NAME`. Keys are only ever *added* to `config/.ssh/authorized_keys` at
+startup. To revoke a key or change its restriction, edit that file as well. If a key appears there twice,
+sshd uses the first matching line.
 
 On the client (`~/.ssh/config`):
 

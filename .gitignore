@@ -45,5 +45,6 @@ Temporary Items
 
 # local compose file + runtime data (keys, host keys, logs, restic repos)
 /compose.yaml
+/keys/
 /config/
 /backups/
