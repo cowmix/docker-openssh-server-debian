@@ -1,5 +1,6 @@
 # Example: SSH box + restic backup target.
-#   set PUBLIC_KEY below, then: docker compose up -d
+#   cp compose.example.yaml compose.yaml   # compose.yaml is git-ignored
+#   edit PUBLIC_KEY etc., then: docker compose up -d
 #
 # Clients back up with:
 #   restic -r sftp://restic@<host>:2222//backups/<repo-name> init

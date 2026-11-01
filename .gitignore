@@ -43,6 +43,7 @@ Temporary Items
 .apdisk
 .jenkins-external
 
-# local compose runtime data (host keys, logs, restic repos)
+# local compose file + runtime data (keys, host keys, logs, restic repos)
+/compose.yaml
 /config/
 /backups/

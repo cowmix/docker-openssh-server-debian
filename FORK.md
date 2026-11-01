@@ -30,7 +30,7 @@ docker build --build-arg ROOT_SRC=root -t openssh-server-debian .
 restic talks to this container over **sftp**. Repositories live under `BACKUP_DIR` (default `/backups`).
 Always mount a volume there; the container logs a warning if it isn't a mount.
 
-See [`compose.yaml`](compose.yaml) for a ready-to-edit example. The essentials:
+Copy [`compose.example.yaml`](compose.example.yaml) to `compose.yaml` (git-ignored) and edit it. The essentials:
 
 - `USER_NAME=restic`. Don't use `backup`: it's an existing Debian system user and init will halt.
 - `PUBLIC_KEY=restrict,command="/usr/lib/openssh/sftp-server" ssh-ed25519 AAAA...` for sftp-only client keys.
