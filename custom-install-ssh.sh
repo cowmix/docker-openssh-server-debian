@@ -15,7 +15,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y \
   zip unzip p7zip-full \
   sqlite3 postgresql \
   gnupg ansible awscli \
-  subversion software-properties-common apt-transport-https \
+  subversion apt-transport-https \
   default-jdk maven
 
 echo "**** install Node.js 22 ****"
