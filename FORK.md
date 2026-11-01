@@ -15,6 +15,12 @@ generated file and is left untouched so upstream merges stay clean. Fork-specifi
 - `UsePAM no` is forced in `/config/sshd/sshd_config` on every start. sshd runs as the unprivileged
   user, so Debian's default `UsePAM yes` denies every login ("Access denied ... by PAM account configuration").
 - `/backups` is prepared as a restic destination (see below).
+- SSH host keys are generated per container at first start. Debian's package creates keys at build time,
+  so the build deletes them. Older builds of this fork shipped those shared keys. On startup, keys that
+  end in `@buildkitsandbox` are detected and regenerated, and a warning is logged. Clients then see a
+  one-time "host key changed" warning: `ssh-keygen -R '[host]:2222'`.
+- Startup logs a summary of the login account and every authorized key: fingerprint, comment, and
+  shell vs. sftp-only. Duplicate and invalid lines are flagged.
 
 ## Building
 

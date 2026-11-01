@@ -149,6 +149,43 @@ if [[ -d "$PUBLIC_KEY_DIR" ]]; then
     done
 fi
 
+# summarize who can log in. There's a single account; every key below logs in as it.
+echo "───────────────────────────────────────"
+echo "Login account: ${USER_NAME} (uid $(id -u "${USER_NAME}"), gid $(id -g "${USER_NAME}"))"
+echo "  password login: $([[ "$PASSWORD_ACCESS" == "true" ]] && echo enabled || echo disabled)"
+echo "  sudo:           $([[ "$SUDO_ACCESS" == "true" ]] && echo enabled || echo disabled)"
+echo "Authorized keys (/config/.ssh/authorized_keys):"
+declare -A SEEN_FP=()
+KEY_COUNT=0
+while IFS= read -r KEY_LINE || [[ -n "$KEY_LINE" ]]; do
+    [[ -z "${KEY_LINE// }" || "$KEY_LINE" == \#* ]] && continue
+    KEY_COUNT=$((KEY_COUNT + 1))
+    if ! KEY_INFO=$(ssh-keygen -lf - <<< "$KEY_LINE" 2>/dev/null); then
+        echo "  [${KEY_COUNT}] INVALID line: ${KEY_LINE:0:60}..."
+        continue
+    fi
+    # "256 SHA256:xxxx comment (ED25519)"
+    KEY_FP=$(awk '{print $2}' <<< "$KEY_INFO")
+    KEY_TYPE=$(sed -E 's/.*\(([^)]*)\)$/\1/' <<< "$KEY_INFO")
+    KEY_COMMENT=$(awk '{$1=$2=$NF=""; sub(/^ +/,""); sub(/ +$/,""); print}' <<< "$KEY_INFO")
+    if [[ "$KEY_LINE" =~ command=\"[^\"]*sftp-server ]]; then
+        KEY_ACCESS="sftp only"
+    elif [[ "$KEY_LINE" =~ command=\" ]]; then
+        KEY_ACCESS="forced command"
+    else
+        KEY_ACCESS="shell"
+    fi
+    KEY_NOTE=""
+    if [[ -n "${SEEN_FP[$KEY_FP]:-}" ]]; then
+        KEY_NOTE="  <-- DUPLICATE of [${SEEN_FP[$KEY_FP]}], ignored (sshd uses the first match)"
+    else
+        SEEN_FP[$KEY_FP]=$KEY_COUNT
+    fi
+    printf '  [%d] %-14s %-8s %s  %s%s\n' "$KEY_COUNT" "$KEY_ACCESS" "$KEY_TYPE" "$KEY_FP" "${KEY_COMMENT:-(no comment)}" "$KEY_NOTE"
+done < /config/.ssh/authorized_keys
+[[ "$KEY_COUNT" -eq 0 ]] && echo "  (none) - nobody can log in with a key"
+echo "───────────────────────────────────────"
+
 # back up old log files processed by logrotate
 if [[ -f /config/logs/openssh/openssh.log ]]; then
     mv /config/logs/openssh /config/logs/openssh.old.logs
