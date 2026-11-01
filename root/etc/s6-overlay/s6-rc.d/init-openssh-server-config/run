@@ -86,6 +86,12 @@ else
     echo "User/password ssh access is disabled."
 fi
 
+# Debian's sshd_config ships "UsePAM yes", but sshd runs as the unprivileged user here,
+# so pam_unix can't read /etc/shadow and every login (even key auth) is denied with
+# "Access denied ... by PAM account configuration". Disable PAM; password auth still
+# works via /etc/shadow, which is made readable above when PASSWORD_ACCESS=true.
+sed -i '/^#\?UsePAM/c\UsePAM no' /config/sshd/sshd_config
+
 # set umask for sftp
 UMASK=${UMASK:-022}
 sed -i "s|/usr/lib/openssh/sftp-server$|/usr/lib/openssh/sftp-server -u ${UMASK}|g" /config/sshd/sshd_config
