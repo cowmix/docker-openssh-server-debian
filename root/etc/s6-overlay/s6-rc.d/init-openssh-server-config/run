@@ -91,6 +91,10 @@ fi
 # "Access denied ... by PAM account configuration". Disable PAM; password auth still
 # works via /etc/shadow, which is made readable above when PASSWORD_ACCESS=true.
 sed -i '/^#\?UsePAM/c\UsePAM no' /config/sshd/sshd_config
+# PAM's pam_env used to load LANG from /etc/default/locale; set it via sshd instead
+# (kept directly after UsePAM so it stays in the global section, outside any Match block)
+sed -i '/^SetEnv LANG=/d' /config/sshd/sshd_config
+sed -i "/^UsePAM no/a SetEnv LANG=${LANG:-en_US.UTF-8}" /config/sshd/sshd_config
 
 # set umask for sftp
 UMASK=${UMASK:-022}
